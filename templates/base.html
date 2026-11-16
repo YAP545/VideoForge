@@ -4,8 +4,41 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0B0C0E">
-  <title>{% block title %}VideoForge{% endblock %}</title>
-  <meta name="description" content="{% block description %}Turn any topic into an animated AI video in seconds.{% endblock %}">
+  <title>{% block title %}VideoForge — AI Animated Video Generator{% endblock %}</title>
+  <meta name="description" content="{% block description %}Turn any topic or story into an animated AI video with 5-scene planning, voiceover, and styled captions.{% endblock %}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <!-- Open Graph / Social Media Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VideoForge">
+  <meta property="og:title" content="{% block og_title %}VideoForge — AI Animated Video Generator{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Turn any topic or story into animated videos with multi-scene planning, voiceover, and styled captions.{% endblock %}">
+  <meta property="og:image" content="/static/previews/preview_a_scene1.jpg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}VideoForge — AI Animated Video Generator{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Turn any topic or story into animated videos with multi-scene planning, voiceover, and styled captions.{% endblock %}">
+  <meta name="twitter:image" content="/static/previews/preview_a_scene1.jpg">
+
+  <!-- Structured Data: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "VideoForge",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "All",
+    "description": "Turn any topic or story into animated videos with multi-scene planning, voiceover, and styled captions.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

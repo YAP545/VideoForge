@@ -53,7 +53,7 @@ from fastapi import (  # noqa: E402
     File,
     UploadFile,
 )
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse  # noqa: E402
+from fastapi.responses import FileResponse, PlainTextResponse, HTMLResponse, RedirectResponse, JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from fastapi.templating import Jinja2Templates  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
@@ -76,8 +76,8 @@ from auth import (  # noqa: E402
     clear_rate_limit,
 )
 
-VIDEO_DIR = BASE / "videos"
-VIDEO_DIR.mkdir(exist_ok=True)
+VIDEO_DIR = Path(os.getenv("VIDEO_DIR", str(BASE / "videos"))).resolve()
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 MAX_ACTIVE = int(os.getenv("MAX_ACTIVE_JOBS", "5"))
 _DEFAULT_SECRET = "super-secret-videoforge-key-change-in-prod-32"
 SESSION_SECRET = os.getenv("SESSION_SECRET", _DEFAULT_SECRET)
@@ -1939,6 +1939,66 @@ async def page_content_policy(request: Request, db: Session = Depends(get_db)):
 @app.get("/api/info")
 def api_info():
     return {"provider": os.getenv("PROVIDER", "mock")}
+
+
+
+# ── Health & SEO Endpoints ──────────────────────────────────────────────────
+@app.get("/health")
+def health_check():
+    """Health-check endpoint for Railway, Docker, and uptime probes."""
+    return {
+        "status": "healthy",
+        "service": "videoforge",
+        "version": "1.0.0",
+        "provider": os.getenv("PROVIDER", "storyboard"),
+    }
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt(request: Request):
+    """Robots exclusion standard: allow public pages, disallow private and video paths."""
+    base_url = public_base_url(request)
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Allow: /pricing\n"
+        "Allow: /login\n"
+        "Allow: /signup\n"
+        "Allow: /terms\n"
+        "Allow: /privacy\n"
+        "Allow: /content-policy\n"
+        "Disallow: /dashboard\n"
+        "Disallow: /create\n"
+        "Disallow: /project/\n"
+        "Disallow: /video/\n"
+        "Disallow: /videos/\n"
+        "Disallow: /my-videos\n"
+        "Disallow: /settings\n"
+        "Disallow: /api/\n"
+        f"Sitemap: {base_url}/sitemap.xml\n"
+    )
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml(request: Request):
+    """Dynamically generated XML sitemap with canonical public marketing and policy pages."""
+    base_url = public_base_url(request)
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    urls = [
+        {"loc": f"{base_url}/", "changefreq": "daily", "priority": "1.0"},
+        {"loc": f"{base_url}/pricing", "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{base_url}/login", "changefreq": "monthly", "priority": "0.5"},
+        {"loc": f"{base_url}/signup", "changefreq": "monthly", "priority": "0.6"},
+        {"loc": f"{base_url}/terms", "changefreq": "monthly", "priority": "0.3"},
+        {"loc": f"{base_url}/privacy", "changefreq": "monthly", "priority": "0.3"},
+        {"loc": f"{base_url}/content-policy", "changefreq": "monthly", "priority": "0.3"},
+    ]
+    xml_items = "\n".join(
+        f"  <url>\n    <loc>{u['loc']}</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>{u['changefreq']}</changefreq>\n    <priority>{u['priority']}</priority>\n  </url>"
+        for u in urls
+    )
+    xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{xml_items}\n</urlset>"""
+    return Response(content=xml_content, media_type="application/xml")
 
 
 # ── Safe Media Serving & Static Mounts ──────────────────────────────────────

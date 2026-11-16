@@ -91,3 +91,37 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded
 ```
 
 4. Back up `videoforge.db` and the `videos/` folder regularly. Never commit `.env`.
+
+
+---
+
+## Production Deployment (Railway / Docker)
+
+VideoForge is container-ready with persistent volume support for Railway, Render, Fly.io, or any Docker-compatible host.
+
+### 1. Docker Build & Run Locally
+```bash
+docker build -t videoforge .
+docker run -p 8000:8000 -v videoforge_data:/data --env-file .env videoforge
+```
+
+### 2. Railway Deployment
+1. Connect this GitHub repository (`https://github.com/YAP545/VideoForge`) in Railway.
+2. Under **Settings**, add a **Persistent Volume** mounted at `/data`.
+3. In the Railway **Variables** tab, set:
+   * `APP_ENV=production`
+   * `APP_BASE_URL=https://<your-subdomain>.up.railway.app`
+   * `SESSION_SECRET=<random-32-byte-hex-string>`
+   * `DATABASE_URL=sqlite:////data/videoforge.db`
+   * `VIDEO_DIR=/data/videos`
+   * `PROVIDER=storyboard`
+   * `IMAGE_PROVIDER=cloudflare`
+   * `CLOUDFLARE_ACCOUNT_ID=<your-id>`
+   * `CLOUDFLARE_API_TOKEN=<your-token>`
+   * `GEMINI_API_KEY=<your-key>`
+
+### 3. Queue Architecture & Restart Limitations
+* **Job Queue:** Uses an in-memory queue (`queue.Queue`) processed sequentially by a single background daemon worker.
+* **Worker Process:** In production, Uvicorn runs with `--workers 1` to ensure thread safety, SQLite write-lock integrity, and sequential video rendering without CPU/memory thrashing.
+* **Restart Recovery:** If the container restarts or crashes during video generation, the `lifespan` handler automatically detects interrupted jobs on startup, marks them as interrupted, and refunds user credits.
+* **Scaling Note:** For horizontal multi-container autoscaling in high-traffic production environments, migrate the in-memory queue to a persistent message broker (e.g., Redis + Celery / ARQ) and SQLite to a managed PostgreSQL cluster.

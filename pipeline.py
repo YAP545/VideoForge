@@ -63,8 +63,8 @@ from planner import (
 
 BASE = Path(__file__).parent
 FONTS_DIR = BASE / "static" / "fonts"
-VIDEO_DIR = BASE / "videos"
-VIDEO_DIR.mkdir(exist_ok=True)
+VIDEO_DIR = Path(os.getenv("VIDEO_DIR", str(BASE / "videos"))).resolve()
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def detect_voice(topic: str, narration: str = "") -> str:
