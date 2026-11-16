@@ -1283,7 +1283,7 @@ async def page_project_generate(video_id: str, request: Request, db: Session = D
             ctx["scenes"] = parsed_scenes
             ctx["flash"] = {
                 "type": "error",
-                "msg": f"Validation Error: Cloudflare Workers AI configuration incomplete: {cf_status.get('status')}.",
+                "msg": f"Validation Error: Cloudflare Workers AI configuration incomplete: {cf_status.get('status')}. Either set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN or set IMAGE_PROVIDER=pollinations (default free provider).",
             }
             return render_page(request, "plan_scenes.html", ctx)
 

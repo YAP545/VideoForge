@@ -609,8 +609,8 @@ def download_scene_image(
                 return True
         return ok
 
-    img_provider = os.getenv("IMAGE_PROVIDER", "cloudflare").strip().lower()
-    if img_provider in ("cloudflare", "cf"):
+    img_provider = os.getenv("IMAGE_PROVIDER", "pollinations").strip().lower()
+    if img_provider in ("cloudflare", "cf", "auto"):
         cf_cfg = check_cloudflare_config()
         if cf_cfg["configured"]:
             return download_cloudflare_image(
@@ -627,16 +627,16 @@ def download_scene_image(
                 negative_prompt=negative_prompt,
                 **kwargs,
             )
-        else:
-            err_msg = "[pipeline] IMAGE_PROVIDER=cloudflare is active but Cloudflare credentials are missing. Fallback to Pollinations is disabled."
-            print(err_msg)
-            if request_tracker is not None:
-                request_tracker["cloudflare_error"] = err_msg
+        elif img_provider in ("cloudflare", "cf"):
+            warn_msg = (
+                "[pipeline] IMAGE_PROVIDER=cloudflare is active but Cloudflare credentials "
+                "(CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN) are missing. "
+                "Gracefully falling back to free Pollinations image generation."
+            )
+            print(warn_msg)
             if on_wait:
-                on_wait(err_msg)
-            if draw_placeholder_on_fail:
-                draw_placeholder_image(out_path, scene_num, prompt[:60], width=width, height=height)
-            return False
+                on_wait(f"Scene {scene_num}: Cloudflare credentials missing, using free Pollinations fallback...")
+            # Fall through to download_pollinations_image below
 
     return download_pollinations_image(
         prompt=prompt,

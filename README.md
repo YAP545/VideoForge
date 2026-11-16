@@ -115,9 +115,7 @@ docker run -p 8000:8000 -v videoforge_data:/data --env-file .env videoforge
    * `DATABASE_URL=sqlite:////data/videoforge.db`
    * `VIDEO_DIR=/data/videos`
    * `PROVIDER=storyboard`
-   * `IMAGE_PROVIDER=cloudflare`
-   * `CLOUDFLARE_ACCOUNT_ID=<your-id>`
-   * `CLOUDFLARE_API_TOKEN=<your-token>`
+   * `IMAGE_PROVIDER=pollinations`  # Free default; no API key needed (or 'cloudflare' if configured)
    * `GEMINI_API_KEY=<your-key>`
 
 ### 3. Queue Architecture & Restart Limitations
