@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ t.lib_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header flex justify-between items-center" style="flex-wrap:wrap;gap:16px;">
+    <div>
+      <h1 class="page-header__title">{{ t.lib_title }}</h1>
+      <p class="page-header__sub">All your created videos in one place.</p>
+    </div>
+    <a href="/create" class="btn btn--primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New video
+    </a>
+  </div>
+
+  {% if videos %}
+  <div class="video-grid">
+    {% for v in videos %}
+    <article class="card video-thumb card--hover">
+      <a href="/video/{{ v.id }}" style="text-decoration:none;color:inherit;">
+        <div class="video-thumb__preview">
+          {% if v.thumbnail_url %}
+          <img src="{{ v.thumbnail_url }}" alt="{{ v.title or v.topic }}" loading="lazy">
+          {% else %}
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true" style="opacity:.35"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+          {% endif %}
+          <span class="badge badge--{{ 'good' if v.status == 'done' else 'warn' if v.status == 'processing' else 'bad' }}"
+                style="position:absolute;top:8px;right:8px;">
+            {{ t['lib_status_' + ('done' if v.status == 'done' else 'processing' if v.status in ('processing','queued','running') else 'failed')] }}
+          </span>
+        </div>
+        <div class="video-thumb__body">
+          <p class="video-thumb__title">{{ v.title or v.topic or 'Untitled' }}</p>
+          <div class="video-thumb__meta">
+            <span>{{ v.created_at.strftime('%d %b %Y') if v.created_at else '' }}</span>
+            {% if v.length_seconds %}<span>· {{ v.length_seconds }}s</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      <div class="video-thumb__actions" style="padding: 0 16px 14px;">
+        <a href="/video/{{ v.id }}" class="btn btn--outline btn--sm">Open</a>
+        <form method="POST" action="/video/{{ v.id }}/delete" style="display:inline;"
+              onsubmit="return confirm('Delete this video?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn btn--ghost btn--sm text-bad" type="submit">Delete</button>
+        </form>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="padding: 64px; text-align: center;">
+    <p class="text-muted mb-16">{{ t.lib_empty }}</p>
+    <a href="/create" class="btn btn--primary">{{ t.dash_create_btn }}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

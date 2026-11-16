@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ t.login_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-box">
+    <h1 class="auth-box__title">{{ t.login_title }}</h1>
+    <p class="auth-box__sub">Welcome back.</p>
+
+    {% if error %}
+    <div class="flash flash--error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="auth-form" method="POST" action="/login" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="form-group">
+        <label class="form-label" for="email">{{ t.login_email }}</label>
+        <input
+          class="input" type="email" id="email" name="email"
+          value="{{ form_email or '' }}"
+          autocomplete="email" required aria-required="true"
+          placeholder="you@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">{{ t.login_password }}</label>
+        <input
+          class="input" type="password" id="password" name="password"
+          autocomplete="current-password" required aria-required="true"
+          placeholder="••••••••"
+        >
+        <p class="form-hint" style="margin-top: 4px;">
+          <a href="/forgot-password" class="text-muted" style="font-size:.82rem;">{{ t.login_forgot }}</a>
+        </p>
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit">{{ t.login_submit }}</button>
+    </form>
+
+    <p class="text-center text-sm text-muted mt-24">
+      {{ t.login_no_account }}
+      <a href="/signup">{{ t.nav_signup }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

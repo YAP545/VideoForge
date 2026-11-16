@@ -1,0 +1,46 @@
+# Environment & secrets
+.env
+.env.*
+*.env
+!.env.example
+!env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Node & Frontend builds
+node_modules/
+dist/
+build/
+*.egg-info/
+
+# Logs & temporary files
+*.log
+logs/
+temp/
+tmp/
+tmp_test/
+videoforge/
+notepad*
+*.mp3
+*.mp4
+
+# Media output & test generation artifacts
+videos/
+test_output_frames/
+test_fox_captions/
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.pytest_cache/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

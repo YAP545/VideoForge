@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ t.privacy_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container">
+  <article class="prose">
+    <h1>{{ t.privacy_title }}</h1>
+    <p class="lead">Last updated: October 2025. We respect your privacy.</p>
+
+    <h2>What we collect</h2>
+    <ul>
+      <li><strong>Account data:</strong> email address and hashed password when you sign up.</li>
+      <li><strong>Usage data:</strong> video prompts, generated clips, and credit transactions.</li>
+      <li><strong>Technical data:</strong> server logs including IP address, browser, and request timestamps for security and debugging.</li>
+    </ul>
+
+    <h2>How we use it</h2>
+    <ul>
+      <li>To provide the video generation service.</li>
+      <li>To send transactional emails (account verification, password reset). We do not send marketing emails without your consent.</li>
+      <li>To detect abuse and enforce our Content Policy.</li>
+    </ul>
+
+    <h2>Data retention</h2>
+    <p>Generated videos are kept for as long as your account is active. You can delete individual videos or your whole account at any time from Settings. Logs are retained for up to 90 days.</p>
+
+    <h2>Third parties</h2>
+    <p>We use Razorpay for payment processing (they handle card data — we never see it) and Replicate for AI model inference when that provider is selected. Both are bound by their own privacy policies.</p>
+
+    <h2>Cookies</h2>
+    <p>We use one HTTP-only session cookie to keep you logged in. We do not use advertising cookies or third-party tracking.</p>
+
+    <h2>Your rights</h2>
+    <p>You can request a copy of your data or ask us to delete it by emailing <a href="mailto:privacy@videoforge.ai">privacy@videoforge.ai</a>.</p>
+
+    <h2>Contact</h2>
+    <p><a href="mailto:privacy@videoforge.ai">privacy@videoforge.ai</a></p>
+  </article>
+</div>
+{% endblock %}

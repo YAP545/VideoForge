@@ -1,0 +1,6 @@
+# Only for PROVIDER=local (your own NVIDIA GPU)
+# Install PyTorch with CUDA first from https://pytorch.org, then:
+diffusers
+transformers
+accelerate
+sentencepiece

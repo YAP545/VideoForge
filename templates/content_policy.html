@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ t.content_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container">
+  <article class="prose">
+    <h1>{{ t.content_title }}</h1>
+    <p class="lead">VideoForge is a creative tool. These rules keep it safe for everyone.</p>
+
+    <h2>What you cannot generate</h2>
+    <ul>
+      <li><strong>Sexual content</strong> — nudity, explicit or suggestive content of any kind.</li>
+      <li><strong>Graphic violence</strong> — gore, torture, beheading, mutilation.</li>
+      <li><strong>Self-harm</strong> — content that promotes, depicts, or glorifies suicide or self-harm.</li>
+      <li><strong>Real people without consent</strong> — videos that depict, defame, or impersonate real named individuals or public figures.</li>
+      <li><strong>Illegal content</strong> — anything that violates applicable law, including child exploitation material, which is strictly forbidden and reported to authorities.</li>
+      <li><strong>Misinformation</strong> — deliberately false content designed to deceive, including fake news videos.</li>
+      <li><strong>Dangerous instructions</strong> — weapon making, drug synthesis, or similar harmful how-to content.</li>
+    </ul>
+
+    <h2>Enforcement</h2>
+    <p>We run automated prompt moderation before every generation. Content that matches prohibited patterns is blocked immediately. Repeated violations result in account suspension.</p>
+    <p>If you see a generated video that violates this policy, use the <strong>Report</strong> button on the video page. Reports are reviewed by our team within 48 hours.</p>
+
+    <h2>AI-generated content notice</h2>
+    <p>All videos produced by VideoForge are <strong>AI-generated</strong>. A visible notice is shown on every video page. Do not misrepresent AI output as authentic human-recorded footage.</p>
+
+    <h2>Appeal</h2>
+    <p>If you believe a prompt was incorrectly blocked, email <a href="mailto:trust@videoforge.ai">trust@videoforge.ai</a> with your account email and a description of what you were trying to create.</p>
+  </article>
+</div>
+{% endblock %}

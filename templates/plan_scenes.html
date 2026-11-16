@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Review &amp; Edit Scenes — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 60px;">
+  <!-- Step Indicator -->
+  <div class="steps" role="tablist">
+    <div class="step step--done">1. Topic &amp; Settings</div>
+    <div class="step step--active">2. Plan Scenes</div>
+    <div class="step">3. Generate &amp; Stitch</div>
+    <div class="step">4. Download</div>
+  </div>
+
+  <div class="page-header flex justify-between items-center" style="margin-top: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 class="page-header__title">Review &amp; Edit Scenes</h1>
+      <p class="page-header__sub" style="word-break: break-word;">
+        Topic: <strong>{{ video.topic[:160] ~ ('...' if video.topic|length > 160 else '') }}</strong> · {{ video.length_seconds }}s ({{ scenes|length }} scenes)
+      </p>
+    </div>
+    {% if credits_enabled %}
+    <div class="badge badge--accent" style="font-size: .9rem; padding: 6px 14px;">
+      Total Cost: {{ scenes|length }} Credits
+    </div>
+    {% endif %}
+  </div>
+
+  {% if flash %}
+  <div class="flash flash--{{ flash.type }}" role="alert">{{ flash.msg }}</div>
+  {% endif %}
+
+  {% if diag_info %}
+  <div class="card mb-20" style="padding: 12px 18px; background: rgba(61, 214, 140, 0.08); border: 1px solid var(--good); border-radius: var(--radius);">
+    <div class="flex items-center justify-between flex-wrap gap-8">
+      <div>
+        <strong style="color: var(--good); font-size: 0.88rem;">Live Diagnostics:</strong>
+        <span class="text-sm" style="margin-left: 8px;">Video ID: <code class="font-mono text-xs">{{ diag_info.video_id }}</code> &bull; Scenes: <strong>{{ diag_info.scene_count }}</strong></span>
+      </div>
+      <div class="text-xs text-muted font-mono">
+        {% for sc in diag_info.scenes %}
+          Scene {{ sc.order_idx + 1 }}: <span style="color: {% if sc.status == 'populated' %}var(--good){% else %}var(--bad){% endif %};">{{ sc.status }} ({{ sc.length }} chars)</span>{% if not loop.last %} | {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="POST" action="/project/{{ video.id }}/generate" id="scenes-form" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="flex-col gap-20" id="scenes-container">
+      {% for s in scenes %}
+      <div class="card scene-card" style="padding: 24px; position: relative;" data-index="{{ loop.index0 }}">
+        <div class="flex justify-between items-center mb-16">
+          <span class="badge badge--neutral fw-700">Scene {{ loop.index }} (~5s)</span>
+          <button type="button" class="btn btn--ghost btn--sm text-bad remove-scene-btn" onclick="removeScene(this)">Remove</button>
+        </div>
+
+        <div class="form-group mb-16">
+          <label class="form-label">Visual Description (AI Video Prompt)</label>
+          <textarea class="textarea" name="visual_prompt_{{ loop.index0 }}" rows="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>{{ s.visual_prompt or s.image_prompt or s.prompt or s.visual_description or s.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Burned-in Caption (Optional)</label>
+          <input class="input" type="text" name="caption_{{ loop.index0 }}" value="{{ s.caption or s.burned_in_caption or '' }}">
+          <input type="hidden" name="narration_{{ loop.index0 }}" value="{{ s.narration or s.caption or s.burned_in_caption or '' }}">
+          <input type="hidden" name="orig_caption_{{ loop.index0 }}" value="{{ s.caption or s.burned_in_caption or '' }}">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Options Section: Aspect Ratio & Video Settings -->
+    <div class="card mt-24" style="padding: 24px;">
+      <h3 class="fw-700 mb-16">Video & Production Settings</h3>
+
+      <!-- Aspect Ratio Selection -->
+      <div class="form-group mb-20">
+        <label class="form-label" style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Export Aspect Ratio</label>
+        <div class="flex gap-12 flex-wrap" role="group" aria-label="Aspect Ratio">
+          <label class="ratio-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);">
+            <input type="radio" name="aspect_ratio" value="16:9" {% if video.aspect_ratio == '16:9' or not video.aspect_ratio %}checked{% endif %}>
+            <span><strong>16:9 Landscape</strong> (1280×720)</span>
+          </label>
+          <label class="ratio-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);">
+            <input type="radio" name="aspect_ratio" value="9:16" {% if video.aspect_ratio == '9:16' %}checked{% endif %}>
+            <span><strong>9:16 Portrait / Reels</strong> (1080×1920)</span>
+          </label>
+          <label class="ratio-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);">
+            <input type="radio" name="aspect_ratio" value="1:1" {% if video.aspect_ratio == '1:1' %}checked{% endif %}>
+            <span><strong>1:1 Square</strong> (1080×1080)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Character Consistency / Master Reference Mode -->
+      <div class="form-group mb-20">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: rgba(59, 130, 246, 0.04);">
+          <input type="checkbox" name="keep_consistency" value="1" {% if video.keep_consistency or 'hanuman' in (video.topic|lower) %}checked{% endif %} style="margin-top: 3px;">
+          <div>
+            <span><strong>Maintain Character & Scene Consistency (Master Reference Mode)</strong></span>
+            <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Generates a master reference image to anchor character face, crown, attire, and environment across all 5 scenes without character drift or extra people.</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Voiceover audio toggle -->
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+        <input type="checkbox" name="enable_voiceover" value="1" checked>
+        <span><strong>Enable Voice-over:</strong> Generate AI spoken narration for scenes</span>
+      </label>
+    </div>
+
+
+    <div class="flex justify-between items-center mt-32" style="flex-wrap:wrap; gap:16px;">
+      <button type="button" class="btn btn--outline" id="add-scene-btn" onclick="addScene()">+ Add Scene</button>
+      <div class="flex gap-12">
+        <a href="/create" class="btn btn--ghost">Back</a>
+        <button type="submit" class="btn btn--primary btn--lg" id="generate-btn">
+          Queue &amp; Generate{% if credits_enabled %} (<span id="btn-credit-count">{{ scenes|length }}</span> Credits){% endif %} →
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Browser form-cache safeguard: ensure textarea values match DOM text content
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll('.scene-card').forEach((card) => {
+    const ta = card.querySelector('textarea');
+    if (ta && !ta.value.trim() && ta.textContent.trim()) {
+      ta.value = ta.textContent.trim();
+    }
+  });
+});
+
+function updateIndices() {
+  const cards = document.querySelectorAll('.scene-card');
+  cards.forEach((card, idx) => {
+    card.dataset.index = idx;
+    const badge = card.querySelector('.badge');
+    if (badge) badge.textContent = 'Scene ' + (idx + 1) + ' (~5s)';
+    const prompt = card.querySelector('textarea');
+    if (prompt) prompt.name = 'visual_prompt_' + idx;
+    const caption = card.querySelector('input[type="text"]');
+    if (caption) caption.name = 'caption_' + idx;
+    const narration = card.querySelector('input[type="hidden"][name^="narration_"]');
+    if (narration) narration.name = 'narration_' + idx;
+    const origCap = card.querySelector('input[type="hidden"][name^="orig_caption_"]');
+    if (origCap) origCap.name = 'orig_caption_' + idx;
+  });
+  const count = cards.length;
+  const creditSpan = document.getElementById('btn-credit-count');
+  if (creditSpan) creditSpan.textContent = count;
+  const generateBtn = document.getElementById('generate-btn');
+  if (count === 0) generateBtn.disabled = true;
+  else generateBtn.disabled = false;
+}
+
+function removeScene(btn) {
+  const card = btn.closest('.scene-card');
+  if (document.querySelectorAll('.scene-card').length <= 1) {
+    alert('At least one scene is required.');
+    return;
+  }
+  card.remove();
+  updateIndices();
+}
+
+function addScene() {
+  const container = document.getElementById('scenes-container');
+  const count = document.querySelectorAll('.scene-card').length;
+  if (count >= 6) {
+    alert('Maximum 6 scenes allowed.');
+    return;
+  }
+  const div = document.createElement('div');
+  div.className = 'card scene-card';
+  div.style.cssText = 'padding: 24px; position: relative;';
+  div.innerHTML = `
+    <div class="flex justify-between items-center mb-16">
+      <span class="badge badge--neutral fw-700">Scene ${count + 1} (~5s)</span>
+      <button type="button" class="btn btn--ghost btn--sm text-bad remove-scene-btn" onclick="removeScene(this)">Remove</button>
+    </div>
+    <div class="form-group mb-16">
+      <label class="form-label">Visual Description (AI Video Prompt)</label>
+      <textarea class="textarea" name="visual_prompt_${count}" rows="2" required placeholder="Describe the scene visuals..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Burned-in Caption (Optional)</label>
+      <input class="input" type="text" name="caption_${count}" placeholder="Subtitle caption text...">
+      <input type="hidden" name="narration_${count}" value="">
+      <input type="hidden" name="orig_caption_${count}" value="">
+    </div>
+  `;
+  container.appendChild(div);
+  updateIndices();
+}
+</script>
+{% endblock %}

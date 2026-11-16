@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0C0E">
+  <title>{% block title %}VideoForge{% endblock %}</title>
+  <meta name="description" content="{% block description %}Turn any topic into an animated AI video in seconds.{% endblock %}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/css/main.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo">Video<span>Forge</span></a>
+
+      <div class="nav__links" id="nav-menu">
+        <a href="/" class="nav__link {% if active_page == 'home' %}nav__link--active{% endif %}">{{ t.nav_home }}</a>
+        <a href="/pricing" class="nav__link {% if active_page == 'pricing' %}nav__link--active{% endif %}">{{ t.nav_pricing }}</a>
+        {% if user %}
+          <a href="/dashboard" class="nav__link {% if active_page == 'dashboard' %}nav__link--active{% endif %}">{{ t.nav_dashboard }}</a>
+          <a href="/create" class="nav__link {% if active_page == 'create' %}nav__link--active{% endif %}">{{ t.nav_create }}</a>
+          <a href="/my-videos" class="nav__link {% if active_page == 'library' %}nav__link--active{% endif %}">{{ t.nav_library }}</a>
+        {% endif %}
+      </div>
+
+      <div class="nav__right">
+        <button id="lang-btn" class="nav__lang" aria-label="Switch language">{{ t.nav_lang }}</button>
+
+        {% if user %}
+          <a href="/settings" class="btn btn--ghost btn--sm">{{ t.nav_settings }}</a>
+          <a href="/logout" class="btn btn--outline btn--sm">{{ t.nav_logout }}</a>
+        {% else %}
+          <a href="/login" class="btn btn--ghost btn--sm">{{ t.nav_login }}</a>
+          <a href="/signup" class="btn btn--primary btn--sm">{{ t.nav_signup }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Demo Mode Banner (when PROVIDER=mock) ── -->
+{% if is_mock_mode and (active_page in ['dashboard', 'create', 'library'] or is_video_page) %}
+<div class="container mt-16">
+  <div class="flash flash--info" role="status" style="border: 2px solid var(--accent); background: rgba(255, 107, 53, 0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+    <div>
+      <strong style="color: var(--accent);">DEMO MODE:</strong>
+      <span style="color: var(--fg); margin-left: 6px;">no real AI model is connected, so videos are placeholder test clips.</span>
+    </div>
+    <span class="badge badge--accent">PROVIDER=mock</span>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Development Mode Banner (for verification/reset links) ── -->
+{% if dev_link %}
+<div class="container mt-16">
+  <div class="flash flash--info" role="status" style="border: 2px dashed var(--accent); background: rgba(255, 107, 53, 0.12);">
+    <strong>🛠️ Development Mode Link:</strong>
+    <span class="text-muted">{{ dev_link.label }}:</span>
+    <a href="{{ dev_link.url }}" class="fw-700" style="word-break: break-all; margin-left: 6px;">{{ dev_link.url }}</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Flash messages ── -->
+{% if flash %}
+<div class="container mt-16">
+  <div class="flash flash--{{ flash.type }}" role="alert" data-autodismiss>{{ flash.msg }}</div>
+</div>
+{% endif %}
+
+<!-- ── Page content ── -->
+<main id="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── Footer ── -->
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer__inner">
+      <span>© {{ current_year }} VideoForge</span>
+      <nav class="footer__links" aria-label="Footer navigation">
+        <a href="/terms">{{ t.footer_terms }}</a>
+        <a href="/privacy">{{ t.footer_privacy }}</a>
+        <a href="/content-policy">{{ t.footer_content }}</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

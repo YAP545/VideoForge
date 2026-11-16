@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ t.signup_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-box">
+    <h1 class="auth-box__title">{{ t.signup_title }}</h1>
+    <p class="auth-box__sub">Start with 20 free credits — no card needed.</p>
+
+    {% if error %}
+    <div class="flash flash--error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="auth-form" method="POST" action="/signup" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="form-group">
+        <label class="form-label" for="email">{{ t.signup_email }}</label>
+        <input
+          class="input" type="email" id="email" name="email"
+          value="{{ form_email or '' }}"
+          autocomplete="email" required
+          aria-required="true"
+          placeholder="you@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">{{ t.signup_password }}</label>
+        <input
+          class="input" type="password" id="password" name="password"
+          autocomplete="new-password" required aria-required="true"
+          placeholder="••••••••"
+          minlength="8"
+          aria-describedby="pw-hint"
+        >
+        <p class="form-hint" id="pw-hint">{{ t.signup_password_hint }}</p>
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit">{{ t.signup_submit }}</button>
+    </form>
+
+    <p class="text-center text-sm text-muted mt-24">
+      {{ t.signup_have_account }}
+      <a href="/login">{{ t.nav_login }}</a>
+    </p>
+    <p class="text-center text-xs text-muted mt-12">
+      By signing up you agree to our
+      <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
+    </p>
+  </div>
+</div>
+{% endblock %}

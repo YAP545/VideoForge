@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}VideoForge — {{ t.land_hero }}{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container">
+    <p class="section-label">AI Video Generation</p>
+    <h1 class="hero__title">
+      Turn <em>any idea</em> into an<br>animated video
+    </h1>
+    <p class="hero__sub">{{ t.land_sub }}</p>
+    <div class="hero__actions">
+      <a href="/signup" class="btn btn--primary btn--lg">{{ t.land_cta }}</a>
+      <a href="/pricing" class="btn btn--outline btn--lg">{{ t.nav_pricing }}</a>
+    </div>
+
+    <!-- Demo / placeholder video area -->
+    <div class="demo-area" aria-label="Video preview area">
+      <span class="demo-area__label">DEMO</span>
+      <div class="demo-area__placeholder">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+        </svg>
+        <p>Sample video will play here</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══════════════════════════════════════════════════════ -->
+<section class="section" aria-labelledby="how-title">
+  <div class="container">
+    <p class="section-label">{{ t.land_how_title }}</p>
+    <h2 class="section-title" id="how-title">Three steps to your video</h2>
+    <div class="how-grid">
+
+      <article class="card how-card">
+        <div class="how-card__number" aria-hidden="true">01</div>
+        <h3 class="how-card__title">{{ t.land_step1_title }}</h3>
+        <p class="how-card__body">{{ t.land_step1_body }}</p>
+      </article>
+
+      <article class="card how-card">
+        <div class="how-card__number" aria-hidden="true">02</div>
+        <h3 class="how-card__title">{{ t.land_step2_title }}</h3>
+        <p class="how-card__body">{{ t.land_step2_body }}</p>
+      </article>
+
+      <article class="card how-card">
+        <div class="how-card__number" aria-hidden="true">03</div>
+        <h3 class="how-card__title">{{ t.land_step3_title }}</h3>
+        <p class="how-card__body">{{ t.land_step3_body }}</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══ EXAMPLE PROMPTS ════════════════════════════════════════════════════ -->
+<section class="section section--sm" aria-labelledby="examples-title">
+  <div class="container text-center">
+    <p class="section-label">{{ t.land_examples_title }}</p>
+    <h2 class="section-title" id="examples-title">See what people are making</h2>
+    <div class="chip-row" role="list" aria-label="Example prompts">
+      {% for prompt in example_prompts %}
+      <button class="chip" role="listitem" onclick="usePrompt(this)" data-prompt="{{ prompt }}" type="button">
+        {{ prompt }}
+      </button>
+      {% endfor %}
+    </div>
+    <div class="mt-24">
+      <a href="/signup" class="btn btn--primary">Start creating →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING PREVIEW ═══════════════════════════════════════════════════ -->
+<section class="section" aria-labelledby="pricing-preview-title">
+  <div class="container">
+    <p class="section-label">{{ t.land_pricing_title }}</p>
+    <h2 class="section-title" id="pricing-preview-title">{{ t.land_pricing_title }}</h2>
+    <p class="section-sub">{{ t.land_pricing_sub }}</p>
+
+    <div class="pricing-grid mt-40">
+
+      <!-- Free -->
+      <div class="card pricing-card">
+        <p class="pricing-card__label">{{ t.pricing_free_title }}</p>
+        <p class="pricing-card__name">Free</p>
+        <div class="pricing-card__price"><sup>₹</sup>0</div>
+        <p class="pricing-card__sub">{{ t.pricing_free_note }}</p>
+        <ul class="pricing-card__list">
+          <li>{{ t.pricing_free_credits }}</li>
+          <li>{{ t.pricing_per_clip }}</li>
+          <li>All styles & aspect ratios</li>
+          <li>MP4 download</li>
+        </ul>
+        <div class="pricing-card__cta">
+          <a href="/signup" class="btn btn--outline btn--full">Get started free</a>
+        </div>
+      </div>
+
+      <!-- Creator -->
+      <div class="card pricing-card pricing-card--featured">
+        <p class="pricing-card__label">Most popular</p>
+        <p class="pricing-card__name">{{ t.pricing_pack1_title }}</p>
+        <div class="pricing-card__price"><sup>₹</sup>299</div>
+        <p class="pricing-card__sub">100 credits</p>
+        <ul class="pricing-card__list">
+          <li>100 credits (~16 videos)</li>
+          <li>{{ t.pricing_per_clip }}</li>
+          <li>Priority generation queue</li>
+          <li>HD downloads</li>
+          <li>Private share links</li>
+        </ul>
+        <div class="pricing-card__cta">
+          <a href="/pricing" class="btn btn--primary btn--full">Buy Creator pack</a>
+        </div>
+      </div>
+
+      <!-- Studio -->
+      <div class="card pricing-card">
+        <p class="pricing-card__label">{{ t.pricing_pack2_title }}</p>
+        <p class="pricing-card__name">{{ t.pricing_pack2_title }}</p>
+        <div class="pricing-card__price"><sup>₹</sup>799</div>
+        <p class="pricing-card__sub">350 credits</p>
+        <ul class="pricing-card__list">
+          <li>350 credits (~58 videos)</li>
+          <li>{{ t.pricing_per_clip }}</li>
+          <li>Priority generation queue</li>
+          <li>HD downloads + raw clips ZIP</li>
+          <li>Private share links</li>
+          <li>Background music upload</li>
+        </ul>
+        <div class="pricing-card__cta">
+          <a href="/pricing" class="btn btn--outline btn--full">Buy Studio pack</a>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="text-center text-muted text-sm mt-24">
+      <a href="/pricing">See full pricing details →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ══ CTA BANNER ═════════════════════════════════════════════════════════ -->
+<section class="section section--sm">
+  <div class="container text-center">
+    <div class="card" style="padding: 56px 40px; background: linear-gradient(135deg, rgba(255,107,53,.12) 0%, rgba(255,107,53,.04) 100%);">
+      <h2 class="section-title">Ready to create your first video?</h2>
+      <p class="section-sub" style="margin: 12px auto 32px;">No credit card needed. Start with 20 free credits.</p>
+      <a href="/signup" class="btn btn--primary btn--lg">{{ t.land_cta }}</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function usePrompt(btn) {
+  const prompt = btn.dataset.prompt;
+  // Store in sessionStorage so create page can prefill
+  sessionStorage.setItem("vf_prompt", prompt);
+  window.location.href = "/create";
+}
+</script>
+{% endblock %}

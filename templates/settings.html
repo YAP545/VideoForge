@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}{{ t.settings_title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 60px;">
+  <h1 class="fw-800 mb-32" style="font-size: 1.9rem;">{{ t.settings_title }}</h1>
+
+  <div class="settings-layout">
+    <!-- Side nav -->
+    <nav class="settings-nav" aria-label="Settings sections">
+      <a href="#profile" class="active">{{ t.settings_profile }}</a>
+      <a href="#password">{{ t.settings_password }}</a>
+      <a href="#danger">Danger zone</a>
+    </nav>
+
+    <!-- Sections -->
+    <div class="settings-section">
+
+      <!-- Profile -->
+      <section id="profile" aria-labelledby="profile-title">
+        <h2 id="profile-title">{{ t.settings_profile }}</h2>
+        {% if profile_success %}
+        <div class="flash flash--success" role="alert" data-autodismiss>Profile updated.</div>
+        {% endif %}
+        <form method="POST" action="/settings/profile" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="form-group mb-16">
+            <label class="form-label" for="s-email">{{ t.settings_email }}</label>
+            <input class="input" type="email" id="s-email" name="email"
+                   value="{{ user.email }}" autocomplete="email" required>
+          </div>
+          <button class="btn btn--primary" type="submit">{{ t.settings_save }}</button>
+        </form>
+      </section>
+
+      <!-- Change password -->
+      <section id="password" aria-labelledby="password-title">
+        <h2 id="password-title">{{ t.settings_password }}</h2>
+        {% if pw_success %}
+        <div class="flash flash--success" role="alert" data-autodismiss>Password changed.</div>
+        {% endif %}
+        {% if pw_error %}
+        <div class="flash flash--error" role="alert">{{ pw_error }}</div>
+        {% endif %}
+        <form method="POST" action="/settings/password" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="form-group mb-16">
+            <label class="form-label" for="old-pw">{{ t.settings_old_password }}</label>
+            <input class="input" type="password" id="old-pw" name="old_password"
+                   autocomplete="current-password" required>
+          </div>
+          <div class="form-group mb-16">
+            <label class="form-label" for="new-pw">{{ t.settings_new_password }}</label>
+            <input class="input" type="password" id="new-pw" name="new_password"
+                   autocomplete="new-password" required minlength="8">
+            <p class="form-hint">At least 8 characters.</p>
+          </div>
+          <button class="btn btn--primary" type="submit">{{ t.settings_save }}</button>
+        </form>
+      </section>
+
+      <!-- Admin: Video Generator Provider Status -->
+      {% if user.is_admin %}
+      <section id="provider-status" aria-labelledby="provider-title">
+        <h2 id="provider-title">⚡ Video Provider Status (Admin)</h2>
+        <div class="card" style="padding: 24px;">
+          <div class="flex justify-between items-center mb-16 flex-wrap gap-12">
+            <div>
+              <p class="text-sm text-muted">Configured Engine</p>
+              <p class="fw-800" style="font-size: 1.2rem; text-transform: uppercase;">
+                {{ provider_info.name }}
+                {% if provider_info.name == 'mock' %}
+                <span class="badge badge--warn" style="font-size: .75rem; margin-left: 8px;">Demo Mock</span>
+                {% else %}
+                <span class="badge badge--good" style="font-size: .75rem; margin-left: 8px;">Live AI Model</span>
+                {% endif %}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-muted">Authentication Token</p>
+              <p class="fw-700">
+                {% if provider_info.has_token %}
+                <span class="badge badge--good">Token Configured ({{ provider_info.token_masked }})</span>
+                {% else %}
+                <span class="badge badge--bad">No Token Set</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+
+          {% if provider_info.model %}
+          <div class="mb-16">
+            <span class="text-sm text-muted">Active Model:</span>
+            <code style="background: var(--surface2); padding: 4px 8px; border-radius: 4px; color: var(--accent); margin-left: 6px;">{{ provider_info.model }}</code>
+          </div>
+          {% endif %}
+
+          <div style="border-top: 1px solid var(--border); padding-top: 16px;" class="flex items-center justify-between flex-wrap gap-12">
+            <div>
+              <button type="button" class="btn btn--outline btn--sm" id="btn-test-conn" onclick="testProviderConnection()">
+                🔌 Test Provider Connection
+              </button>
+            </div>
+            <div id="test-conn-result" style="font-size: .88rem;"></div>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- Danger zone -->
+      <section id="danger" aria-labelledby="danger-title">
+        <h2 id="danger-title" class="text-bad">Danger zone</h2>
+        <div class="card" style="padding: 20px 24px; border-color: rgba(255,84,89,.3);">
+          <p class="fw-700 mb-8">Delete account</p>
+          <p class="text-muted text-sm mb-16">This permanently deletes your account and all videos. This cannot be undone.</p>
+          <form method="POST" action="/settings/delete-account"
+                onsubmit="return confirm('Are you absolutely sure? This cannot be undone.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="btn btn--outline btn--sm text-bad" type="submit" style="border-color:var(--bad);">
+              Delete my account
+            </button>
+          </form>
+        </div>
+      </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function testProviderConnection() {
+  const btn = document.getElementById('btn-test-conn');
+  const resDiv = document.getElementById('test-conn-result');
+  if (!btn || !resDiv) return;
+
+  btn.disabled = true;
+  resDiv.innerHTML = '<span class="text-muted">Testing connection...</span>';
+
+  try {
+    const res = await fetch('/api/admin/provider/test');
+    const data = await res.json();
+    if (data.ok) {
+      resDiv.innerHTML = `<span class="badge badge--good">✓ ${data.message}</span>`;
+    } else {
+      resDiv.innerHTML = `<span class="badge badge--bad">✕ Error: ${data.error}</span>`;
+    }
+  } catch (err) {
+    resDiv.innerHTML = `<span class="badge badge--bad">✕ Network error: ${err.message}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

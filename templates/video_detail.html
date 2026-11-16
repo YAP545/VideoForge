@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}{{ video.title }} — VideoForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 60px;">
+  <!-- Step Indicator -->
+  <div class="steps" role="tablist">
+    <div class="step step--done">1. Topic &amp; Settings</div>
+    <div class="step step--done">2. Plan Scenes</div>
+    <div class="step {% if video.status != 'done' %}step--active{% else %}step--done{% endif %}">3. Generate &amp; Stitch</div>
+    <div class="step {% if video.status == 'done' %}step--active{% endif %}">4. Download</div>
+  </div>
+
+  <div class="page-header flex justify-between items-center" style="margin-top: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 class="page-header__title">{{ video.title }}</h1>
+      <p class="page-header__sub">
+        {{ video.style }} · {{ video.aspect_ratio }} · {{ video.length_seconds }}s
+      </p>
+    </div>
+    <div id="overall-status-badge">
+      <span class="badge badge--{{ 'good' if video.status == 'done' else 'warn' if video.status in ('generating', 'stitching', 'queued') else 'bad' }}" style="font-size: .95rem; padding: 6px 16px;">
+        {{ video.status|capitalize }}
+      </span>
+    </div>
+  </div>
+
+  {% if video.status == 'done' %}
+  <!-- Video Player & Download Actions -->
+  <div class="create-layout" style="margin-top: 24px;">
+    <div>
+      <div class="card" style="overflow: hidden; border-radius: var(--radius-lg); background: #000;">
+        <video controls autoplay loop playsinline style="width: 100%; aspect-ratio: 16/9; max-height: 520px; object-fit: contain;">
+          <source src="{{ video.video_path }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="flex gap-12 mt-20 flex-wrap">
+        <a href="{{ video.video_path }}" download class="btn btn--primary btn--lg">
+          ⬇ Download MP4
+        </a>
+        {% if video.no_music_video_path %}
+        <a href="{{ video.no_music_video_path }}" download class="btn btn--outline">
+          ⬇ No-Music MP4
+        </a>
+        {% endif %}
+        {% if video.zip_path %}
+        <a href="{{ video.zip_path }}" download class="btn btn--outline">
+          📦 Download Clips (ZIP)
+        </a>
+        {% endif %}
+        {% if video.srt_path %}
+        <a href="{{ video.srt_path }}" download class="btn btn--outline">
+          📄 Subtitles (.SRT)
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Music upload option -->
+    <aside class="create-sidebar">
+      <div class="card create-sidebar__card">
+        <p class="fw-700 mb-8">🎵 Background Music</p>
+        <p class="text-sm text-muted mb-16">Upload an MP3 or WAV audio track to mix low with automatic crossfade.</p>
+        <form method="POST" action="/project/{{ video.id }}/music" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input class="input mb-12" type="file" name="music_file" accept=".mp3,.wav" required style="font-size: .85rem;">
+          <button class="btn btn--outline btn--sm btn--full" type="submit">Mix Audio Track</button>
+        </form>
+      </div>
+
+      <div class="card create-sidebar__card">
+        <p class="fw-700 mb-8">Video Details</p>
+        <div class="flex-col gap-8 text-sm">
+          <div class="flex justify-between"><span class="text-muted">Length</span><span>{{ video.length_seconds }}s</span></div>
+          <div class="flex justify-between"><span class="text-muted">Scenes</span><span>{{ scenes|length }} clips</span></div>
+          <div class="flex justify-between"><span class="text-muted">Ratio</span><span>{{ video.aspect_ratio }}</span></div>
+          <div class="flex justify-between"><span class="text-muted">Captions</span><span>{{ video.caption_lang|upper }}</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  {% elif video.status == 'failed' %}
+  <div class="card mt-24" style="padding: 32px; text-align: center;">
+    <h2 class="fw-800 mb-8" style="color: #e74c3c;">Generation Failed</h2>
+    <p class="text-muted text-sm" style="word-break: break-word;">{{ video.error or 'An unknown error occurred.' }}</p>
+    <a href="/create" class="btn btn--primary mt-20">Try Again</a>
+  </div>
+  {% else %}
+  <div class="card mt-24" style="padding: 32px; text-align: center;" id="progress-container">
+    <div class="spinner" style="width: 44px; height: 44px; margin-bottom: 20px;"></div>
+    <h2 class="fw-800 mb-8" id="progress-heading">
+      <span id="progress-text-display">{{ video.progress_text or 'Generating Your Video Scenes...' }}</span>
+    </h2>
+    <p class="text-muted text-sm" id="progress-sub">Free storyboard synthesis with pan/zoom motion, captions &amp; voiceover.</p>
+  </div>
+  {% endif %}
+
+  <!-- Storyboard Grid: Thumbnail, Caption, and Prompt -->
+  <div class="mt-40">
+    <div class="flex justify-between items-center mb-20 flex-wrap gap-12">
+      <div>
+        <h2 class="fw-700" style="font-size: 1.3rem;">🎨 Storyboard Scenes &amp; Clips</h2>
+        <p class="text-xs text-muted">Each scene's thumbnail, caption, visual prompt, and single-scene regeneration.</p>
+      </div>
+      <span class="badge badge--accent">{{ video.style }} · {{ video.aspect_ratio }}</span>
+    </div>
+
+    <div class="video-grid" id="scenes-grid">
+      {% for s in scenes %}
+      <div class="card video-thumb scene-box" id="scene-box-{{ s.id }}">
+        <div class="video-thumb__preview" style="position: relative; background: #000;">
+          {% if s.clip_path %}
+          <video src="{{ s.clip_path }}" poster="/videos/{{ video.id }}_scene_{{ s.order_idx }}.jpg" controls loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+          {% elif video.status == 'failed' or s.status == 'failed' %}
+          <div class="flex-col items-center gap-8" style="padding: 24px 10px; text-align: center;">
+            <span style="font-size: 26px; color: #e74c3c;">✕</span>
+            <span class="text-xs fw-700" style="color: #e74c3c;">Scene Failed</span>
+            {% if s.error %}
+            <span class="text-xs text-muted" style="font-size: 0.72rem; line-height: 1.3; max-width: 90%; word-break: break-word;">{{ s.error }}</span>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="flex-col items-center gap-8" style="padding: 30px 10px;">
+            <div class="spinner" style="width: 24px; height: 24px;"></div>
+            <span class="text-xs text-muted">{{ s.status|capitalize }}</span>
+          </div>
+          {% endif %}
+          <span class="badge badge--{{ 'good' if s.status == 'done' else 'warn' if s.status in ('pending', 'running') else 'bad' }}" style="position: absolute; top: 8px; right: 8px;">
+            Scene {{ loop.index }}
+          </span>
+          {% if s.is_placeholder %}
+          <span class="badge badge--warn" style="position: absolute; top: 8px; left: 8px; font-size: .7rem;">⚠ Placeholder</span>
+          {% elif s.is_reused or (s.error and 'Reused' in s.error) %}
+          <span class="badge badge--neutral" style="position: absolute; top: 8px; left: 8px; font-size: .7rem;">ℹ Reused (Scene {{ s.reused_from or 'nearby' }})</span>
+          {% endif %}
+        </div>
+        <div class="video-thumb__body">
+          <p class="text-xs text-muted uppercase fw-700" style="letter-spacing: 0.5px;">Visual Prompt</p>
+          <p class="video-thumb__title" style="margin-top: 2px;" title="{{ s.visual_prompt }}">{{ s.visual_prompt }}</p>
+          {% if s.caption %}
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+            <p class="text-xs text-muted uppercase fw-700" style="letter-spacing: 0.5px; margin-bottom: 2px;">Caption</p>
+            <p class="text-xs text-accent fw-600">“{{ s.caption }}”</p>
+          </div>
+          {% endif %}
+        </div>
+        {% if video.status == 'done' %}
+        <div style="padding: 0 16px 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn--outline btn--sm btn--full" type="button" onclick="regenerateScene('{{ video.id }}', {{ loop.index }}, this)">
+            ↺ Regenerate this scene
+          </button>
+          {% if s.is_placeholder %}
+          <button class="btn btn--outline btn--sm btn--full" type="button" onclick="regenerateScene('{{ video.id }}', {{ loop.index }}, this)" title="Placeholder card — retry downloading a real AI image" style="border-color: #f59e0b; color: #f59e0b;">
+            🔄 Retry image
+          </button>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Original Topic & Complete Storyboard Prompts Section -->
+  <div class="card mt-32" style="padding: 24px 28px; border: 1px solid var(--border); background: var(--bg-card); border-radius: var(--radius-lg);">
+    <div class="flex justify-between items-center flex-wrap gap-12 mb-16">
+      <div>
+        <h3 class="fw-700" style="font-size: 1.15rem; margin-bottom: 4px;">🎬 Original Topic &amp; Detailed Prompts</h3>
+        <p class="text-xs text-muted">Complete breakdown of the prompt text and captions sent to the model for each scene.</p>
+      </div>
+    </div>
+
+    <!-- Original User Topic -->
+    <div style="background: rgba(255, 107, 53, 0.08); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
+      <span class="text-xs fw-700" style="color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Original Topic:</span>
+      <p style="font-size: 1.05rem; font-weight: 600; margin-top: 4px; color: var(--fg); white-space: pre-wrap; word-break: break-word; line-height: 1.6;">{{ video.topic or video.title }}</p>
+    </div>
+
+    <!-- Full list of scene prompts and captions -->
+    <div class="flex-col gap-12" id="storyboard-prompts-list">
+      {% for s in scenes %}
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px;">
+        <div class="flex justify-between items-center flex-wrap gap-8 mb-8">
+          <span class="fw-700" style="color: var(--accent); font-size: .95rem;">Scene {{ loop.index }}</span>
+          <span class="badge badge--{{ 'good' if s.status == 'done' else 'warn' if s.status in ('pending', 'running') else 'bad' }} text-xs">
+            {{ s.status|capitalize }}
+          </span>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <span class="text-xs text-muted fw-600 uppercase" style="letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Image Prompt:</span>
+          <p style="font-family: monospace, sans-serif; font-size: .9rem; line-height: 1.5; color: var(--fg); background: rgba(0,0,0,0.35); padding: 10px 14px; border-radius: 6px; word-break: break-word; white-space: pre-wrap; margin: 0;">{{ s.visual_prompt }}</p>
+        </div>
+        {% if s.caption %}
+        <div>
+          <span class="text-xs text-muted fw-600 uppercase" style="letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Subtitle Caption:</span>
+          <p style="font-size: .92rem; color: #FFD166; font-style: italic; margin: 0;">“{{ s.caption }}”</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function regenerateScene(videoId, sceneNum, btn) {
+  if (!confirm(`Re-make Scene ${sceneNum} and update the video?`)) return;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ Regenerating...";
+  try {
+    const res = await fetch(`/api/jobs/${videoId}/scenes/${sceneNum}/regenerate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert("Failed to regenerate: " + (err.detail || "Server error"));
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  } catch (e) {
+    alert("Connection error: " + e.message);
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+{% if video.status != 'done' and video.status != 'failed' %}
+// Auto-refresh until completed and update progress text
+const checkInterval = setInterval(async () => {
+  try {
+    const res = await fetch('/api/project/{{ video.id }}/status');
+    if (res.ok) {
+      const data = await res.json();
+      const txtElem = document.getElementById("progress-text-display");
+      if (txtElem && data.progress_text) {
+        txtElem.textContent = data.progress_text;
+      }
+      if (data.status === 'done' || data.status === 'failed') {
+        clearInterval(checkInterval);
+        window.location.reload();
+      }
+    }
+  } catch (e) {}
+}, 2000);
+{% endif %}
+</script>
+{% endblock %}

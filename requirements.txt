@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+numpy
+imageio
+imageio-ffmpeg
+httpx
+replicate
+jinja2
+python-multipart
+itsdangerous
+sqlalchemy
+bcrypt
+uharfbuzz
+freetype-py
+Pillow
+edge-tts
