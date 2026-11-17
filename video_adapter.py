@@ -306,10 +306,9 @@ class VideoModelAdapter:
                     improve_texture_flag=True,
                     api_name="/image_to_video",
                 )
-                if isinstance(res, (tuple, list)) and len(res) > 0:
-                    vid_info = res[0]
-                    vid_path_str = vid_info.get("video") if isinstance(vid_info, dict) else str(vid_info)
-                    if vid_path_str and Path(vid_path_str).exists():
+                generated_video = res[0] if isinstance(res, (tuple, list)) and res else res
+                vid_path_str = generated_video.get("video") if isinstance(generated_video, dict) else generated_video if isinstance(generated_video, str) else None
+                if vid_path_str and Path(vid_path_str).is_file() and Path(vid_path_str).stat().st_size > 1000:
                         # Transcode and conform to exact target resolution and duration using FFmpeg
                         temp_in = Path(vid_path_str)
                         cmd = [

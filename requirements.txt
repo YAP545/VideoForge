@@ -15,3 +15,4 @@ uharfbuzz
 freetype-py
 Pillow
 edge-tts
+gradio-client

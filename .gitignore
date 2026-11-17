@@ -44,3 +44,4 @@ env/
 # OS artifacts
 .DS_Store
 Thumbs.db
+.venv312/
