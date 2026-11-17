@@ -1302,33 +1302,33 @@ def generate_motion_clip(
         if mode == 0:
             zoom_vf = (
                 f"zoompan=z='if(lte(zoom,1.0),{max_z},max(1.001,zoom-{step_z}))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
         elif mode == 1:
             zoom_vf = (
                 f"zoompan=z='min(zoom+{step_z},{max_z})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
         else:
             zoom_vf = (
                 f"zoompan=z={max_z}:x='(1-(on/{frames}))*(iw-iw/zoom)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
     else:
         if mode == 0:
             zoom_vf = (
                 f"zoompan=z='min(zoom+{step_z},{max_z})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
         elif mode == 1:
             zoom_vf = (
                 f"zoompan=z='if(lte(zoom,1.0),{max_z},max(1.001,zoom-{step_z}))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
         else:
             zoom_vf = (
                 f"zoompan=z={max_z}:x='(on/{frames})*(iw-iw/zoom)':y='ih/2-(ih/zoom/2)':"
-                f"d={frames}:s={width}x{height}:fps={fps}"
+                f"d=1:s={width}x{height}:fps={fps}"
             )
 
     # Color grading
@@ -1377,6 +1377,7 @@ def generate_motion_clip(
             c_end = min(duration, c_start + c_dur)
             cmd = [
                 ffmpeg_exe, "-y",
+                "-threads", "2",
                 "-loop", "1",
                 "-i", str(image_path),
                 "-i", str(overlay_path),
@@ -1385,6 +1386,7 @@ def generate_motion_clip(
                 "-map", "[v]",
                 "-t", str(duration),
                 "-c:v", "libx264",
+                "-preset", "veryfast",
                 "-pix_fmt", "yuv420p",
                 str(out_clip_path),
             ]
@@ -1397,25 +1399,29 @@ def generate_motion_clip(
     try:
         cmd = [
             ffmpeg_exe, "-y",
+            "-threads", "2",
             "-loop", "1",
             "-i", str(image_path),
             "-vf", vf,
             "-t", str(duration),
             "-c:v", "libx264",
+            "-preset", "veryfast",
             "-pix_fmt", "yuv420p",
             str(out_clip_path),
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
         print(f"[pipeline] Advanced motion render failed ({e}), using safe fallback zoompan.")
-        fallback_vf = f"zoompan=z='min(zoom+0.0008,1.10)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s={width}x{height}:fps={fps},vignette=PI/5"
+        fallback_vf = f"zoompan=z='min(zoom+0.0008,1.10)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={width}x{height}:fps={fps},vignette=PI/5"
         cmd = [
             ffmpeg_exe, "-y",
+            "-threads", "2",
             "-loop", "1",
             "-i", str(image_path),
             "-vf", fallback_vf,
             "-t", str(duration),
             "-c:v", "libx264",
+            "-preset", "veryfast",
             "-pix_fmt", "yuv420p",
             str(out_clip_path),
         ]
